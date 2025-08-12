@@ -1,19 +1,34 @@
 name: build-and-push-image
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      registryName:
+        description: 'ACR name (no domain, e.g. pltengacr01-dcg6ewfbbscthnfr)'
+        required: true
+        default: 'pltengacr01-dcg6ewfbbscthnfr'
+      repositoryName:
+        description: 'Container repository name'
+        required: true
+        default: 'ade/terraform'
+      tag:
+        description: 'Image tag'
+        required: true
+        default: '0.0.1'
 permissions:
-      id-token: write
-      contents: read
-env:
-  registryName: ${{ vars.REGISTRY_NAME }}
-  repositoryName: ${{ vars.REPOSITORY_NAME }}
-  tag: ${{ vars.TAG }}
+  id-token: write
+  contents: read
 
 jobs:
 
   build:
 
     runs-on: ubuntu-latest
+
+    env:
+      registryName: ${{ github.event.inputs.registryName }}
+      repositoryName: ${{ github.event.inputs.repositoryName }}
+      tag: ${{ github.event.inputs.tag }}
 
     steps:
     - name: 'Az CLI login'
@@ -26,7 +41,7 @@ jobs:
     - name: 'Login to Specified ACR'
       run: az acr login -n $registryName
       
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Build the Docker Image
       run: docker build . --file Dockerfile --tag "$registryName.azurecr.io/$repositoryName:$tag"
 
