@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       registryName:
-        description: 'ACR name (prefix segment onlyl: e.g. pltengacr01)'
+        description: 'ACR name'
         required: true
-        default: 'pltengacr01'
+        default: 'pltengacr01-dcg6ewfbbscthnfr'
       repositoryName:
         description: 'Container repository name'
         required: true
