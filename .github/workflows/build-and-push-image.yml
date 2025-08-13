@@ -1,49 +1,74 @@
+# GitHub Actions workflow to build a Docker image and push it to Azure Container Registry (ACR)
+# This workflow can be triggered manually and allows you to specify custom parameters
 name: build-and-push-image
 
+# Trigger conditions: when this workflow runs
 on:
+  # workflow_dispatch allows manual triggering from GitHub UI with custom inputs
   workflow_dispatch:
     inputs:
       registryName:
-        description: 'ACR name'
+        description: 'ACR name'  # The name of your Azure Container Registry (without .azurecr.io)
         required: true
-        default: 'cradedev01'
+        default: 'cradedev01'   # Default ACR name if none provided
       repositoryName:
-        description: 'Container repository name'
+        description: 'Container repository name'  # The repository path inside ACR (like a folder structure)
         required: true
-        default: 'ade/terraform'
+        default: 'ade/terraform'  # Default repository path
       tag:
-        description: 'Image tag'
+        description: 'Image tag'  # Version tag for the Docker image (like v1.0.0, latest, etc.)
         required: true
-        default: '0.0.1'
-permissions:
-  id-token: write
-  contents: read
+        default: '0.0.1'  # Default version tag
 
+# Security permissions needed for this workflow
+permissions:
+  id-token: write   # Required for OpenID Connect authentication with Azure
+  contents: read    # Required to read the repository code and Dockerfile
+
+# Define the jobs that will run (this workflow has one job called "build")
 jobs:
 
+  # Job name: build
   build:
 
+    # Specify which GitHub runner to use (Ubuntu Linux virtual machine)
     runs-on: ubuntu-latest
 
+    # Environment variables available to all steps in this job
+    # These pull values from the manual inputs provided when triggering the workflow
     env:
-      registryName: ${{ github.event.inputs.registryName }}
-      repositoryName: ${{ github.event.inputs.repositoryName }}
-      tag: ${{ github.event.inputs.tag }}
+      registryName: ${{ github.event.inputs.registryName }}      # ACR name from user input
+      repositoryName: ${{ github.event.inputs.repositoryName }}  # Repository path from user input
+      tag: ${{ github.event.inputs.tag }}                        # Image tag from user input
 
+    # Sequential steps that make up the build job
     steps:
+    # Step 1: Authenticate with Azure using stored secrets
     - name: 'Az CLI login'
-      uses: azure/login@v2
+      uses: azure/login@v2  # Official Azure login action
       with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          # These secrets must be configured in your GitHub repository settings
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}          # Azure service principal client ID
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}          # Azure tenant (directory) ID
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}  # Azure subscription ID
           
+    # Step 2: Login to the specific Azure Container Registry
     - name: 'Login to Specified ACR'
-      run: az acr login -n $registryName
+      run: az acr login -n $registryName  # Uses Azure CLI to authenticate Docker with ACR
       
-    - uses: actions/checkout@v4
+    # Step 3: Download the repository code to the runner
+    - uses: actions/checkout@v4  # Official GitHub action to download repository files
+    
+    # Step 4: Build the Docker image from the Dockerfile
     - name: Build the Docker Image
+      # docker build command breakdown:
+      # . = build context (current directory)
+      # --file Dockerfile = specify which Dockerfile to use
+      # --tag = name and tag the resulting image
+      # Final image name format: registryname.azurecr.io/repository/path:tag
       run: docker build . --file Dockerfile --tag "$registryName.azurecr.io/$repositoryName:$tag"
 
+    # Step 5: Upload the built image to Azure Container Registry
     - name: 'Push the Docker Image'
+      # Push the tagged image to ACR so it can be deployed elsewhere
       run: docker push "$registryName.azurecr.io/$repositoryName:$tag"
