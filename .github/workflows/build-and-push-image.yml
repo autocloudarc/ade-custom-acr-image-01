@@ -6,7 +6,7 @@ on:
       registryName:
         description: 'ACR name'
         required: true
-        default: 'pltengacr01-dcg6ewfbbscthnfr'
+        default: 'cradedev01'
       repositoryName:
         description: 'Container repository name'
         required: true
