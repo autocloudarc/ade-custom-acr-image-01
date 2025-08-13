@@ -20,11 +20,12 @@ RUN set -eux; \
     unzip terraform.zip; rm terraform.zip; \
     mv terraform /usr/bin/terraform
 
+# task-item: remove comments below after testing
 # Grab all .sh files from scripts, copy to
 # root scripts, replace line-endings and make them all executable
 # COPY scripts/* /scripts/
 # RUN find /scripts/ -type f -iname "*.sh" -exec dos2unix '{}' '+'
 # RUN find /scripts/ -type f -iname "*.sh" -exec chmod +x {} \;
-    
+
 COPY --chmod=0755 scripts/*.sh /scripts/
 RUN find /scripts/ -type f -iname "*.sh" -exec dos2unix '{}' '+'
