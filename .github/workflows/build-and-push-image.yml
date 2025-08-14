@@ -10,7 +10,7 @@ on:
       registryName:
         description: 'ACR name'  # The name of your Azure Container Registry (without .azurecr.io)
         required: true
-        default: 'cradedev01'   # Default ACR name if none provided
+        default: 'cradedev01-cef6cyaga0gud5gx'   # Default ACR name if none provided
       repositoryName:
         description: 'Container repository name'  # The repository path inside ACR (like a folder structure)
         required: true
